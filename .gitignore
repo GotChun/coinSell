@@ -12,6 +12,7 @@ __pycache__/
 trades.csv
 *.csv
 
+# 라이브러리 폴더
 .venv/
 
 # 실행파일
