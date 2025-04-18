@@ -6,6 +6,8 @@ __pycache__/
 *.py[cod]
 *.log
 
+
+
 # 📊 거래 내역 등 로컬 로그
 trades.csv
 *.csv
