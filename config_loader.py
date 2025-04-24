@@ -1,10 +1,13 @@
-import importlib.util
+import json
 import os
+
 
 # ✅ config.py를 런타임에 동적으로 로드하는 함수
 def load_config():
-    path = os.path.join(os.path.dirname(__file__), "config.py")
-    spec = importlib.util.spec_from_file_location("config", path)
-    config = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(config)
+    config_path = os.path.join(os.getcwd(),"config.json")
+    if not os.path.exists(config_path):
+        raise FileNotFoundError("config.json 파일을 찾을 수 없습니다.")
+    with open(config_path,'r') as f:
+        config = json.load(f)
     return config
+

@@ -1,5 +1,5 @@
 # 🛡️ API 키 파일
-config.py
+config.json
 
 # 🧹 Python 캐시
 __pycache__/

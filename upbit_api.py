@@ -1,8 +1,12 @@
 # 업비트 API 연동 모듈
 
 import pyupbit
-from config import ACCESS_KEY,SECRET_KEY
+from config_loader import load_config
 from utils import log_trade
+
+cfg = load_config()
+ACCESS_KEY = cfg["ACCESS_KEY"]
+SECRET_KEY = cfg["SECRET_KEY"]
 
 upbit = pyupbit.Upbit(ACCESS_KEY,SECRET_KEY)
 
@@ -24,36 +28,46 @@ def place_market_buy(ticker,amount):
     result = upbit.buy_market_order(ticker,amount)
     print("매수 완료",result)
     
+    remaining_krw = get_krw_balance() # 매수 후에 잔고 다시 조회
     log_trade(
         ticker=ticker,
         trade_type="매수",
         price=result.get("price"),
         volume=result.get("volume"),
-        krw=amount
+        krw=amount,
+        remaining_krw=remaining_krw
     )
     
     return result
 
-def place_market_sell(ticker):
-    """보유한 코인을 전량 시장가 매도 (수수료 고려 99.5%)"""
+def place_market_sell(ticker,volume=None, entry_price=None):
     balances = upbit.get_balances()
     coin = ticker.split('-')[1]  # "KRW-BTC" → "BTC"
 
     for b in balances:
         if b['currency'] == coin:
-            volume = float(b['balance'])
-            if volume > 0:
-                sell_volume = volume * 0.995  # 수수료 여유
+            total_volume = float(b['balance'])
+
+            if total_volume > 0:
+                sell_volume = (volume or total_volume) * 0.995 # 전량 또는 일부
                 print(f"[매도] {ticker} 시장가 매도: 수량 {sell_volume:.8f}")
-                result = upbit.sell_market_order(ticker, sell_volume)
-                # return {"test": True}
-                # 로그 기록
+                result = upbit.sell_market_order(ticker,sell_volume)
+
+                # 매ㅐ도 후 잔액 조회 및 수익률 계산
+                sell_price =result.get("price") or 0
+                remaining_krw = get_krw_balance()
+                profit_percent = ((sell_price - entry_price) * 100 if entry_price else None)
+
+                # 거래 로그 저장
                 log_trade(
                     ticker=ticker,
                     trade_type="매도",
-                    price=result.get("price"),
+                    price=sell_price,
                     volume=result.get("volume"),
-                    krw=None  # 필요하면 계산 가능
+                    krw=None,
+                    entry_price=entry_price,
+                    remaining_krw=remaining_krw,
+                    profit_percent=profit_percent
                 )
 
                 return result
