@@ -6,7 +6,7 @@ import requests
 
 INITIAL_CASH = 1_000_000
 RESULTS = []
-
+print("모든 종목 백테스팅 진행 중...")
 # 한글 이름 매핑 생성
 def get_market_name_map(market_prefix="KRW"):
     url = "https://api.upbit.com/v1/market/all"

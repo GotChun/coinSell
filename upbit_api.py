@@ -13,6 +13,7 @@ upbit = pyupbit.Upbit(ACCESS_KEY,SECRET_KEY)
 def get_balances():
     """"보유 자산 목록을 가져옵니다."""
     balances = upbit.get_balances() #보유 자산 목록 조회
+    print("balances : ", balances)
     for b in balances:
         print(f"{b['currency']}:{b['balance']}개 (평단가: {b.get('avg_buy_price','없음')})")
     return balances

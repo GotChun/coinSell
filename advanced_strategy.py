@@ -1,3 +1,5 @@
+import time
+
 import pyupbit
 import pandas as pd
 import ta
@@ -16,6 +18,7 @@ def get_heikin_ashi(df):
 
 # 📋 추세 필터 (1시간봉 기준)
 def check_trend_condition(ticker):
+    time.sleep(0.12)
     df = pyupbit.get_ohlcv(ticker, interval="minute60", count=200)
     if df is None or len(df) < 100:
         return False
@@ -36,8 +39,10 @@ def check_trend_condition(ticker):
 
 # 📌 매수 조건 (5분봉 기준)
 def check_buy_condition(ticker):
+    time.sleep(0.12)
     df = pyupbit.get_ohlcv(ticker, interval="minute5", count=300)
     if df is None or len(df) < 50:
+        print(f"[{ticker}] ❌ 매수조건용 시세 데이터 없음.")
         return False
 
     # MACD 골든크로스
@@ -63,22 +68,28 @@ def check_buy_condition(ticker):
 
 # 🚪 청산 조건 (익절, 손절, 데드크로스)
 def check_sell_condition(ticker, entry_price):
-    df = pyupbit.get_ohlcv(ticker, interval="minute5", count=5)
-    current_price = df["close"].iloc[-1]
+    time.sleep(0.12)
+    df = pyupbit.get_ohlcv(ticker, interval="minute5", count=300)
 
-    # 손절: -3% 이상 손실
-    if current_price <= entry_price * 0.97:
-        return "loss"
+    if df is None or len(df) < 50:
+        print(f"[{ticker}] ❌ 시세 데이터 없음. 매도 조건 검사 건너뜀.")
+        return None
+    current_price = df["close"].iloc[-1]
 
     # 익절: +5% 수익
     if current_price >= entry_price * 1.05:
         # 추가로 1시간봉 추세 유지 여부 확인
         df_1h = pyupbit.get_ohlcv(ticker, interval="minute60", count=200)
-        ema34 = ta.trend.ema_indicator(df_1h["close"], window=34).ema_indicator()
+        ema_indicator = ta.trend.EMAIndicator(close=df_1h["close"], window=34)
+        ema34 = ema_indicator.ema_indicator()
         if current_price > ema34.iloc[-1]:
             return "partial_profit"  # 50% 익절
         else:
             return "full_profit"  # 전량 익절
+
+    # 손절: -3% 이상 손실
+    if current_price <= entry_price * 0.97:
+        return "loss"
 
     # MACD 데드크로스 발생
     macd = ta.trend.MACD(df["close"], window_slow=34, window_fast=12, window_sign=13)
