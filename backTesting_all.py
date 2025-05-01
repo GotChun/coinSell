@@ -3,6 +3,7 @@ import pyupbit
 import ta
 import pandas as pd
 import requests
+from ta.trend import EMAIndicator
 
 INITIAL_CASH = 1_000_000
 RESULTS = []
@@ -24,7 +25,7 @@ tickers = list(name_map.keys())
 
 for TICKER in tickers:
     try:
-        df = pyupbit.get_ohlcv(TICKER, interval="minute60", count=720).copy()
+        df = pyupbit.get_ohlcv(TICKER, interval="minute5", count=1440).copy()
         if df is None or len(df) < 300:
             continue
 
@@ -33,8 +34,11 @@ for TICKER in tickers:
         for i in range(1, len(df)):
             ha_open.append((ha_open[i - 1] + df["HA_Close"].iloc[i - 1]) / 2)
         df["HA_Open"] = ha_open
-        df["EMA34"] = ta.trend.ema_indicator(df["close"], window=34)
-        df["EMA89"] = ta.trend.ema_indicator(df["close"], window=89)
+        ema34 = EMAIndicator(close=df["close"], window=34)
+        ema89 = EMAIndicator(close=df["close"], window=89)
+
+        df["EMA34"] = ema34.ema_indicator()
+        df["EMA89"] = ema89.ema_indicator()
         macd = ta.trend.MACD(df["close"], window_fast=12, window_slow=34, window_sign=13)
         df["MACD"] = macd.macd()
         df["MACD_signal"] = macd.macd_signal()

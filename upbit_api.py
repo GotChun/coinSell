@@ -1,4 +1,5 @@
 # 업비트 API 연동 모듈
+import time
 
 import pyupbit
 from config_loader import load_config
@@ -28,13 +29,25 @@ def place_market_buy(ticker,amount):
     # 실제 거래용
     result = upbit.buy_market_order(ticker,amount)
     print("매수 완료",result)
-    
+
+    time.sleep(1.2)
+    balances = get_balances()
+    coin = ticker.split("-")[1]
+
+    entry_price = 0
+    volume = 0
+    for b in balances:
+        if b['currency'] == coin:
+            entry_price = float(b.get("avg_buy_price", 0))
+            volume = float(b.get("balance", 0))
+            break
+
     remaining_krw = get_krw_balance() # 매수 후에 잔고 다시 조회
     log_trade(
         ticker=ticker,
         trade_type="매수",
-        price=result.get("price"),
-        volume=result.get("volume"),
+        price=entry_price,
+        volume=volume,
         krw=amount,
         remaining_krw=remaining_krw
     )
@@ -50,11 +63,11 @@ def place_market_sell(ticker,volume=None, entry_price=None):
             total_volume = float(b['balance'])
 
             if total_volume > 0:
-                sell_volume = (volume or total_volume) * 0.995 # 전량 또는 일부
+                sell_volume = volume if volume else total_volume # 전량 또는 일부
                 print(f"[매도] {ticker} 시장가 매도: 수량 {sell_volume:.8f}")
                 result = upbit.sell_market_order(ticker,sell_volume)
 
-                # 매ㅐ도 후 잔액 조회 및 수익률 계산
+                # 매도 후 잔액 조회 및 수익률 계산
                 sell_price =result.get("price") or 0
                 remaining_krw = get_krw_balance()
                 profit_percent = ((sell_price - entry_price) * 100 if entry_price else None)
@@ -71,7 +84,11 @@ def place_market_sell(ticker,volume=None, entry_price=None):
                     profit_percent=profit_percent
                 )
 
-                return result
+                return {
+                    "price": entry_price,
+                    "volume": volume,
+                    "raw": result
+                }
 
     print("❌ 매도 실패: 보유 수량 없음")
     return None

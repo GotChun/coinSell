@@ -31,7 +31,9 @@ for b in balances:
         ticker = f"KRW-{currency}"
         holding_dict[ticker] = {
             "entry_price": avg_price,
-            "volume": balance
+            "volume": balance,
+            "partial_profit_done":False,
+            "buy_time":time.time()
         }
         print(f" - {ticker}: 평단가 {avg_price:.2f}원, 보유량 {balance:.6f}개")
 
@@ -63,8 +65,12 @@ while True:
         for ticker in buy_candidates:
             result = place_market_buy(ticker, each_amount * 0.995)
             if result:
-                entry_price = float(result.get("price")) if result.get("price") else each_amount
-                holding_dict[ticker] = {"entry_price": entry_price, "volume": result.get("volume",0), "buy_time": time.time()}
+                entry_price = float(result["price"])  # ✅ 이미 1개당 단가
+                volume = float(result["volume"])  # ✅ 실제 체결 수량
+                total_price = entry_price * volume # 1개당 단가 x 체결 수량
+
+                holding_dict[ticker] = {"entry_price": entry_price, "volume": volume, "partial_profit_done":False, "buy_time": time.time()}
+                print(f"[매수 기록] {ticker} 체결가(1개당): {entry_price:.4f}, 총 지불: {total_price}, 수량: {volume}")
                 traded_this_round.append(f"{ticker} 매수 진입")
                 time.sleep(1)
                 
@@ -73,7 +79,9 @@ while True:
         data = holding_dict[ticker]
         entry_price = float(data["entry_price"])
         volume = data["volume"]
+        partial_profit_done = data.get("partial_profit_done",False)
         buy_time = data.get("buy_time")
+
         if buy_time is None:
             # 이전 버전에서 만들어진 데이터 → 현재 시각으로 대체
             buy_time = time.time()
@@ -82,7 +90,7 @@ while True:
         if time.time() - buy_time < 300:
             continue
 
-        action = check_sell_condition(ticker, entry_price)
+        action = check_sell_condition(ticker, entry_price,partial_profit_done)
             
         if action in ["loss", "full_profit", "macd_exit"]:
             result = place_market_sell(ticker, entry_price=entry_price)
@@ -92,13 +100,17 @@ while True:
                 time.sleep(1)
 
         elif action == "partial_profit":
-            half_volume = volume * 0.5
-            result = place_market_sell(ticker, volume=half_volume, entry_price=entry_price)
-            if result:
-                holding_dict[ticker]["volume"] = half_volume
-                traded_this_round.append(f"{ticker} 50% 익절 완료")
-                time.sleep(1)
-    
+            if not partial_profit_done:
+                half_volume = volume * 0.5
+                result = place_market_sell(ticker, volume=half_volume, entry_price=entry_price)
+                if result:
+                    holding_dict[ticker]["volume"] = half_volume
+                    holding_dict[ticker]["partial_profit_done"] = True #50% 익절 완료
+                    traded_this_round.append(f"{ticker} 50% 익절 완료")
+                    time.sleep(1)
+                else:
+                    # 이미 partial_profit_done 이 True 라면 무시
+                    pass
     print("\n 이번 순회 요약:")
     if traded_this_round:
         for log in traded_this_round:
@@ -106,6 +118,6 @@ while True:
     else:
         print("거래 없음.")
 
-    print("\n 3분 후 다음 순회...")
-    time.sleep(180)
+    print("\n 5분 후 다음 순회...")
+    time.sleep(300)
 
