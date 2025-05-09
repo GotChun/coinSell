@@ -48,6 +48,7 @@ while True:
 
     buy_candidates = []
 
+    # 매수 조건 확인
     for ticker in tickers:
         if ticker not in holding_dict:
             if check_trend_condition(ticker) and check_buy_condition(ticker):
