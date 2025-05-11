@@ -50,7 +50,7 @@ def log_trade(ticker, trade_type, price=None, volume=None, krw=None, entry_price
     with open(LOG_FILE, mode='a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         if write_header:
-            writer.writerow(["날짜/시간","종목명","티커","거래유형","가격","수량","금액","매수단가","수액률(%)","잔여KRW"])
+            writer.writerow(["날짜/시간","종목명","티커","거래유형","가격","수량","금액","매수단가","수익률(%)","잔여KRW"])
         writer.writerow(row)
 
     print(f"📝 거래 내역 저장됨 → {coin_name} ({trade_type})")

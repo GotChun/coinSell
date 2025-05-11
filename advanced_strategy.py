@@ -72,6 +72,10 @@ def check_buy_condition(ticker):
 
     all_conditions = golden_cross and stoch_rebound and ha_bullish and volume_jump
     print(f"[{ticker}] {'🟢' if all_conditions else '⚠️'} 매수 조건 {'충족' if all_conditions else '미충족'}\n")
+    print(f"[{ticker}] MACD 골든크로스: {golden_cross}")
+    print(f"[{ticker}] Stoch RSI 반등: {stoch_rebound}")
+    print(f"[{ticker}] Heikin-Ashi 양봉 전환: {ha_bullish}")
+    print(f"[{ticker}] 거래량 증가: {volume_jump}")
 
     return golden_cross and stoch_rebound and ha_bullish and volume_jump
 

@@ -67,8 +67,11 @@ def place_market_sell(ticker,volume=None, entry_price=None):
                 print(f"[매도] {ticker} 시장가 매도: 수량 {sell_volume:.8f}")
                 result = upbit.sell_market_order(ticker,sell_volume)
 
+                time.sleep(1.2) # 매도 후에 바로 조회가 안되므로 1.2초 지연
+
                 # 매도 후 잔액 조회 및 수익률 계산
                 sell_price =result.get("price") or 0
+                total_price = result.get("price") * sell_volume
                 remaining_krw = get_krw_balance()
                 profit_percent = ((sell_price - entry_price) * 100 if entry_price else None)
 
@@ -78,7 +81,7 @@ def place_market_sell(ticker,volume=None, entry_price=None):
                     trade_type="매도",
                     price=sell_price,
                     volume=result.get("volume"),
-                    krw=None,
+                    krw=total_price,
                     entry_price=entry_price,
                     remaining_krw=remaining_krw,
                     profit_percent=profit_percent

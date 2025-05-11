@@ -79,7 +79,7 @@ while True:
     for ticker in list(holding_dict.keys()):
         data = holding_dict[ticker]
         entry_price = float(data["entry_price"])
-        volume = data["volume"]
+        volume = float(data["volume"])
         partial_profit_done = data.get("partial_profit_done",False)
         buy_time = data.get("buy_time")
 
