@@ -52,12 +52,15 @@ def place_market_buy(ticker,amount):
         remaining_krw=remaining_krw
     )
     
-    return result
+    return {"price":entry_price,
+            "volume":volume,
+            "raw":result
+            }
 
 def place_market_sell(ticker,volume=None, entry_price=None):
     balances = upbit.get_balances()
     coin = ticker.split('-')[1]  # "KRW-BTC" → "BTC"
-
+    krw_before = get_krw_balance()
     for b in balances:
         if b['currency'] == coin:
             total_volume = float(b['balance'])
@@ -66,14 +69,17 @@ def place_market_sell(ticker,volume=None, entry_price=None):
                 sell_volume = volume if volume else total_volume # 전량 또는 일부
                 print(f"[매도] {ticker} 시장가 매도: 수량 {sell_volume:.8f}")
                 result = upbit.sell_market_order(ticker,sell_volume)
-
-                time.sleep(1.2) # 매도 후에 바로 조회가 안되므로 1.2초 지연
+                time.sleep(1.5) # 매도 후에 바로 조회가 안되므로 1.2초 지연
 
                 # 매도 후 잔액 조회 및 수익률 계산
-                sell_price =result.get("price") or 0
-                total_price = result.get("price") * sell_volume
+                krw_after = get_krw_balance()
+                realized_krw = krw_after - krw_before
+                sell_price = realized_krw / sell_volume
+                if sell_price is None:
+                    sell_price = entry_price if entry_price else 0
+                total_price = sell_price * sell_volume
                 remaining_krw = get_krw_balance()
-                profit_percent = ((sell_price - entry_price) * 100 if entry_price else None)
+                profit_percent = ((sell_price - entry_price) / entry_price * 100) if entry_price else None
 
                 # 거래 로그 저장
                 log_trade(

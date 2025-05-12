@@ -66,8 +66,8 @@ while True:
         for ticker in buy_candidates:
             result = place_market_buy(ticker, each_amount * 0.995)
             if result:
-                entry_price = float(result["price"])  # ✅ 이미 1개당 단가
-                volume = float(result["volume"])  # ✅ 실제 체결 수량
+                entry_price = result["price"]  # ✅ 이미 1개당 단가
+                volume = result["volume"]  # ✅ 실제 체결 수량
                 total_price = entry_price * volume # 1개당 단가 x 체결 수량
 
                 holding_dict[ticker] = {"entry_price": entry_price, "volume": volume, "partial_profit_done":False, "buy_time": time.time()}

@@ -1,7 +1,9 @@
-import requests
 import csv
 import os
 from datetime import datetime
+
+import requests
+
 
 def get_market_name_map(market_perfix="KRW"):
     """
