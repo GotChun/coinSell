@@ -26,10 +26,9 @@ def get_market_name_map(market_perfix="KRW"):
     return market_dict
 
 LOG_FILE = "trades.csv" # 거래 내역이 저장될 엑셀 파일
-def log_trade(ticker, trade_type, price=None, volume=None, krw=None, entry_price=None, remaining_krw=None, profit_percent=None):
+def log_trade(ticker, trade_type, price=None, volume=None, krw=None, entry_price=None, remaining_krw=None, profit_percent=None,reason=None):
 
     #상세 거래 내역
-
     market_name_map = get_market_name_map()
     coin_name = market_name_map.get(ticker,ticker)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -43,7 +42,8 @@ def log_trade(ticker, trade_type, price=None, volume=None, krw=None, entry_price
            krw,
            entry_price if entry_price is not None else"",
            f"{profit_percent:.2f}%" if profit_percent is not None else "",
-           remaining_krw if remaining_krw is not None else ""
+           remaining_krw if remaining_krw is not None else "",
+           reason if reason else ""
            ]
     
     # 파일이 없으면 헤더 추가
@@ -52,7 +52,7 @@ def log_trade(ticker, trade_type, price=None, volume=None, krw=None, entry_price
     with open(LOG_FILE, mode='a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         if write_header:
-            writer.writerow(["날짜/시간","종목명","티커","거래유형","가격","수량","금액","매수단가","수익률(%)","잔여KRW"])
+            writer.writerow(["날짜/시간","종목명","티커","거래유형","가격","수량","금액","매수단가","수익률(%)","잔여KRW","매도사유"])
         writer.writerow(row)
 
     print(f"📝 거래 내역 저장됨 → {coin_name} ({trade_type})")

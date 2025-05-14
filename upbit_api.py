@@ -57,7 +57,7 @@ def place_market_buy(ticker,amount):
             "raw":result
             }
 
-def place_market_sell(ticker,volume=None, entry_price=None):
+def place_market_sell(ticker,volume=None, entry_price=None, reason=None):
     balances = upbit.get_balances()
     coin = ticker.split('-')[1]  # "KRW-BTC" → "BTC"
     krw_before = get_krw_balance()
@@ -90,7 +90,8 @@ def place_market_sell(ticker,volume=None, entry_price=None):
                     krw=total_price,
                     entry_price=entry_price,
                     remaining_krw=remaining_krw,
-                    profit_percent=profit_percent
+                    profit_percent=profit_percent,
+                    reason=reason
                 )
 
                 return {

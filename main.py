@@ -26,8 +26,9 @@ for b in balances:
 
     balance = float(b['balance'])
     avg_price = float(b.get('avg_buy_price', 0))
+    total_price = balance * avg_price # 매수가격 * 수량 = 총 보유량,가격
 
-    if balance > 0 and avg_price > 0:
+    if balance > 0 and avg_price > 0: # 보유가가 5000원 미만일 시 거래 목록에 올리지 않음
         ticker = f"KRW-{currency}"
         holding_dict[ticker] = {
             "entry_price": avg_price,
@@ -54,7 +55,7 @@ while True:
             if check_trend_condition(ticker) and check_buy_condition(ticker):
                 buy_candidates.append(ticker)
 
-    if buy_candidates and krw >= 5000:
+    if buy_candidates and krw >= 5000 and first_buy_done == False:
         if krw >= initial_krw * 0.5:
             use_krw = krw * 0.5
             first_buy_done = True
@@ -91,10 +92,18 @@ while True:
         if time.time() - buy_time < 300:
             continue
 
+        sell_reason_map = {
+            "partial_profit":"절반 익절",
+            "full_profit":"전량 익절",
+            "loss":"손절",
+            "macd_exit":"데드크로스"
+        }
+
         action = check_sell_condition(ticker, entry_price,partial_profit_done)
             
         if action in ["loss", "full_profit", "macd_exit"]:
-            result = place_market_sell(ticker, entry_price=entry_price)
+            reason = sell_reason_map.get(action,"")
+            result = place_market_sell(ticker, entry_price=entry_price,reason=reason)
             if result:
                 traded_this_round.append(f"{ticker} 전량 청산: {action}")
                 holding_dict.pop(ticker)
@@ -102,8 +111,9 @@ while True:
 
         elif action == "partial_profit":
             if not partial_profit_done:
+                reason = sell_reason_map.get(action, "")
                 half_volume = volume * 0.5
-                result = place_market_sell(ticker, volume=half_volume, entry_price=entry_price)
+                result = place_market_sell(ticker, volume=half_volume, entry_price=entry_price,reason=reason)
                 if result:
                     holding_dict[ticker]["volume"] = half_volume
                     holding_dict[ticker]["partial_profit_done"] = True #50% 익절 완료
